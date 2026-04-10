@@ -25,4 +25,4 @@ const userModel = {
   },
 };
 
-export default userModel;
+export { userModel };
