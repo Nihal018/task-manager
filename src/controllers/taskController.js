@@ -1,4 +1,4 @@
-import taskModel from "../models/taskModel.js";
+import { taskModel } from "../models/taskModel.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -9,7 +9,7 @@ export const createTask = async (req, res) => {
       return res.status(400).json({ error: "Title is required" });
     }
 
-    const task = await taskModel.createTask(
+    const task = await taskModel.create(
       userId,
       title,
       description || "",
@@ -69,7 +69,7 @@ export const updateTask = async (req, res) => {
 
     const { title, description, status, priority, due_date } = req.body;
 
-    if (status && !["pending", "in-progress", "completed"].includes(status)) {
+    if (status && !["pending", "in_progress", "completed"].includes(status)) {
       return res.status(400).json({ error: "Invalid status value" });
     }
 
