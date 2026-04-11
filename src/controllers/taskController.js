@@ -28,15 +28,71 @@ export const createTask = async (req, res) => {
 export const getAllTasks = async (req, res) => {
   try {
     const userId = req.user.id;
-    const tasks = await taskModel.findAllByUser(userId);
+
+    // Parse and validate query params
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status;
+    const priority = req.query.priority;
+    const sort = req.query.sort || "created_at";
+    const order = (req.query.order || "desc").toLowerCase();
+
+    // Validate pagination
+    if (page < 1) page = 1;
+    if (limit < 1 || limit > 100) limit = 10;
+
+    // Whitelist sortable columns (SQL injection prevention)
+    const allowedSortFields = [
+      "created_at",
+      "updated_at",
+      "due_date",
+      "priority",
+      "status",
+      "title",
+    ];
+    if (!allowedSortFields.includes(sort)) {
+      return res.status(400).json({ error: "Invalid sort field" });
+    }
+
+    // Whitelist order direction
+    if (!["asc", "desc"].includes(order)) {
+      return res.status(400).json({ error: "Order must be asc or desc" });
+    }
+
+    // Validate status and priority if provided
+    if (status && !["pending", "in_progress", "completed"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status filter" });
+    }
+
+    if (priority && !["low", "medium", "high"].includes(priority)) {
+      return res.status(400).json({ error: "Invalid priority filter" });
+    }
+
+    const { tasks, total } = await taskModel.findAllByUser(userId, {
+      page,
+      limit,
+      status,
+      priority,
+      sort,
+      order,
+    });
+
+    const totalPages = Math.ceil(total / limit);
 
     res.json({
-      count: tasks.length,
       tasks,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
     });
   } catch (err) {
-    console.error("Get tasks error: ", err.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Get tasks error:", err.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

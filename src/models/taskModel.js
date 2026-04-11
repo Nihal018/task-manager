@@ -11,13 +11,49 @@ const taskModel = {
     return result.rows[0];
   },
 
-  findAllByUser: async (userId) => {
-    const result = await pool.query(
-      `SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
-      [userId],
+  findAllByUser: async (userId, options) => {
+    const { page, limit, status, priority, sort, order } = options;
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause dynamically
+    const conditions = ["user_id = $1"];
+    const values = [userId];
+    let paramIndex = 2;
+
+    if (status) {
+      conditions.push(`status = $${paramIndex}`);
+      values.push(status);
+      paramIndex++;
+    }
+
+    if (priority) {
+      conditions.push(`priority = $${paramIndex}`);
+      values.push(priority);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.join(" AND ");
+
+    // Get total count (for pagination metadata)
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM tasks WHERE ${whereClause}`,
+      values,
+    );
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get paginated results
+    const dataResult = await pool.query(
+      `SELECT * FROM tasks
+         WHERE ${whereClause}
+         ORDER BY ${sort} ${order}
+         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...values, limit, offset],
     );
 
-    return result.rows;
+    return {
+      tasks: dataResult.rows,
+      total,
+    };
   },
   findByIdAndUser: async (taskId, userId) => {
     const result = await pool.query(
