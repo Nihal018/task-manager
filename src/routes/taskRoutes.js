@@ -1,23 +1,22 @@
 import { Router } from "express";
-
-import { authenticate } from "../middleware/auth.js";
-
 import {
+  createTask,
   getAllTasks,
   getTaskById,
   updateTask,
   deleteTask,
-  createTask,
 } from "../controllers/taskController.js";
+import { authenticate } from "../middleware/auth.js";
+import { cacheTasks } from "../middleware/cache.js";
 
 const router = Router();
 
 router.use(authenticate);
 
 router.post("/", createTask);
-router.get("/", getAllTasks);
+router.get("/", cacheTasks, getAllTasks); // ← cache only on GET list
 router.get("/:id", getTaskById);
-router.delete("/:id", deleteTask);
 router.put("/:id", updateTask);
+router.delete("/:id", deleteTask);
 
 export { router as taskRouter };

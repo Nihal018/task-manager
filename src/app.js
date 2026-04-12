@@ -5,10 +5,15 @@ import pool from "./config/db.js";
 import { authRouter } from "./routes/authRoutes.js";
 import { protectedRouter } from "./routes/protectedRoutes.js";
 import { taskRouter } from "./routes/taskRoutes.js";
+import { apiLimiter, authLimiter } from "./middleware/rateLimiter.js";
 
 const app = express();
 
 app.use(express.json());
+app.use("/api", apiLimiter); // applies to ALL /api routes
+app.use("/api/auth/login", authLimiter); // stricter on login
+app.use("/api/auth/register", authLimiter);
+
 app.use("/api", protectedRouter);
 app.use("/api/auth", authRouter);
 

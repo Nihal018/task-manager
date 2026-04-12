@@ -1,5 +1,5 @@
 import { taskModel } from "../models/taskModel.js";
-
+import { invalidateUserCache } from "../middleware/cache.js";
 export const createTask = async (req, res) => {
   try {
     const { title, description, status, priority, due_date } = req.body;
@@ -17,6 +17,8 @@ export const createTask = async (req, res) => {
       priority || "medium",
       due_date || null,
     );
+
+    await invalidateUserCache(userId);
 
     res.status(201).json({ message: "Task created successfully", task });
   } catch (err) {
@@ -145,6 +147,8 @@ export const updateTask = async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
 
+    await invalidateUserCache(userId);
+
     res.json({
       message: "Task updated successfully",
       task: updatedTask,
@@ -169,6 +173,8 @@ export const deleteTask = async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ error: "Task not found" });
     }
+
+    await invalidateUserCache(userId);
 
     res.json({
       message: "Task deleted successfully",
