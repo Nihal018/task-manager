@@ -41,6 +41,7 @@
 
 ## 📁 Project Structure
 
+```
 task-manager-api/
 ├── config/
 │ ├── db.js # PostgreSQL connection pool
@@ -61,6 +62,7 @@ task-manager-api/
 ├── .env.example
 ├── app.js
 └── package.json
+```
 
 ---
 
